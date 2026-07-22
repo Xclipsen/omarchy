@@ -1,0 +1,72 @@
+#!/bin/bash
+
+# omarchy:summary=Install a checksum-pinned package from a GitHub release
+# omarchy:args=<repo> <tag> <asset> <sha256> <package>
+# omarchy:hidden=true
+# omarchy:requires-sudo=true
+
+set -euo pipefail
+
+if (( $# != 5 )); then
+  echo "Usage: omarchy-pkg-github-release-add <repo> <tag> <asset> <sha256> <package>" >&2
+  exit 2
+fi
+
+repo=$1
+tag=$2
+asset=$3
+expected_sha=$4
+package=$5
+
+[[ $repo =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] || { echo "Invalid GitHub repository: $repo" >&2; exit 1; }
+[[ $tag =~ ^[A-Za-z0-9_.-]+$ ]] || { echo "Invalid release tag: $tag" >&2; exit 1; }
+[[ $asset != */* && -n $asset ]] || { echo "Invalid release asset: $asset" >&2; exit 1; }
+[[ $expected_sha =~ ^[a-f0-9]{64}$ ]] || { echo "Invalid SHA-256 digest" >&2; exit 1; }
+[[ $package =~ ^[A-Za-z0-9@._+-]+$ ]] || { echo "Invalid package name: $package" >&2; exit 1; }
+
+for command in bsdtar gh pacman pkexec sha256sum; do
+  omarchy-cmd-present "$command" || { echo "Required command is missing: $command" >&2; exit 1; }
+done
+
+temp_parent=${XDG_RUNTIME_DIR:-/tmp}
+[[ -d $temp_parent && -O $temp_parent ]] || temp_parent=/tmp
+temp_dir=$(mktemp -d "$temp_parent/omarchy-package.XXXXXX")
+trap 'rm -rf "$temp_dir"' EXIT
+chmod 700 "$temp_dir"
+
+gh release download "$tag" --repo "$repo" --pattern "$asset" --dir "$temp_dir" --clobber
+package_file="$temp_dir/$asset"
+[[ -f $package_file && ! -L $package_file ]] || { echo "Release asset was not downloaded: $asset" >&2; exit 1; }
+
+actual_sha=$(sha256sum "$package_file" | cut -d' ' -f1)
+[[ $actual_sha == "$expected_sha" ]] || {
+  echo "Checksum mismatch for $asset" >&2
+  echo "Expected: $expected_sha" >&2
+  echo "Actual:   $actual_sha" >&2
+  exit 1
+}
+
+archive_package=$(bsdtar -xOf "$package_file" .PKGINFO | sed -n 's/^pkgname = //p')
+[[ $archive_package == "$package" ]] || {
+  echo "Package archive contains '$archive_package', expected '$package'" >&2
+  exit 1
+}
+
+# Root copies the user-owned archive, then repeats both integrity checks on the
+# root-owned copy immediately before pacman executes any package scriptlets.
+pkexec /bin/bash -c '
+  set -euo pipefail
+  export PATH=/usr/bin:/bin
+  source_file=$1
+  expected_sha=$2
+  expected_package=$3
+  temp_dir=$(mktemp -d /var/tmp/omarchy-package.XXXXXX)
+  trap '\''rm -rf "$temp_dir"'\'' EXIT
+  install -m 0600 "$source_file" "$temp_dir/package.pkg.tar.zst"
+  actual_sha=$(sha256sum "$temp_dir/package.pkg.tar.zst" | cut -d" " -f1)
+  [[ $actual_sha == "$expected_sha" ]] || { echo "Package changed before privileged installation" >&2; exit 1; }
+  archive_package=$(bsdtar -xOf "$temp_dir/package.pkg.tar.zst" .PKGINFO | sed -n "s/^pkgname = //p")
+  [[ $archive_package == "$expected_package" ]] || { echo "Unexpected package identity: $archive_package" >&2; exit 1; }
+  env OMARCHY_UPDATE_PACMAN=1 pacman -U --noconfirm --needed "$temp_dir/package.pkg.tar.zst"
+' bash "$package_file" "$expected_sha" "$package"
+pacman -Q "$package" >/dev/null || { echo "Package did not install: $package" >&2; exit 1; }

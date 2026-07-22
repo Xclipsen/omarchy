@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "omarchy.gsr-replay",
+  "name": "GSR Replay",
+  "version": "1.0.0",
+  "author": "Xclipsen",
+  "description": "Controls the GPU Screen Recorder instant replay buffer",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "GsrReplay.qml"
+  },
+  "barWidget": {
+    "displayName": "GSR Replay",
+    "description": "Shows replay status and saves or toggles the replay buffer",
+    "category": "Capture",
+    "allowMultiple": false
+  }
+}

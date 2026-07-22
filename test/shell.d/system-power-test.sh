@@ -24,6 +24,11 @@ for command in omarchy-state omarchy-hyprland-window-close-all sleep; do
 printf '%s %s\n' "$(basename "$0")" "$*" >>"$CALL_LOG"
 SH
 done
+cat >"$mock_bin/omarchy-osd" <<'SH'
+#!/bin/bash
+
+printf 'omarchy-osd %s %s\n' "$1" "$2" >>"$CALL_LOG"
+SH
 chmod +x "$mock_bin"/*
 
 run_power_command() {
@@ -39,7 +44,8 @@ assert_power_calls() {
   local expected_log="$test_tmp/$action-expected.log"
 
   cat >"$expected_log" <<EOF
-systemd-run --user --collect --quiet --on-active=2s systemctl $systemctl_action --no-wall
+systemd-run --user --collect --quiet --on-active=2s --timer-property=AccuracySec=100ms systemctl $systemctl_action --no-wall
+omarchy-osd -i $action
 omarchy-state clear re*-required
 omarchy-hyprland-window-close-all 
 sleep 1

@@ -1,0 +1,79 @@
+name: Prepare upstream sync
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: xclipsen
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/checkout@v5
+        with:
+          repository: omacom-io/omarchy-pkgs
+          path: omarchy-pkgs
+          persist-credentials: false
+      - uses: actions/checkout@v5
+        with:
+          repository: omacom-io/omarchy-iso
+          path: omarchy-iso
+          persist-credentials: false
+      - name: Install test dependencies
+        run: sudo apt-get update && sudo apt-get install --yes imagemagick jq lua5.4
+      - name: Fetch Quattro
+        run: |
+          git remote add upstream https://github.com/basecamp/omarchy.git
+          git fetch upstream quattro
+      - name: Prepare tested merge branch
+        run: |
+          branch="sync/quattro-${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git merge --no-edit upstream/quattro
+          ./test/cli
+          ./test/shell
+          git bundle create "$RUNNER_TEMP/tested-sync.bundle" "$branch"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tested-sync
+          path: ${{ runner.temp }}/tested-sync.bundle
+          if-no-files-found: error
+
+  publish:
+    needs: test
+    permissions:
+      contents: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: xclipsen
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: tested-sync
+          path: ${{ runner.temp }}
+      - name: Publish tested merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          branch="sync/quattro-${GITHUB_RUN_ID}"
+          git remote add upstream https://github.com/basecamp/omarchy.git
+          git fetch upstream quattro
+          git push origin upstream/quattro:quattro
+          git fetch "$RUNNER_TEMP/tested-sync.bundle" "$branch:refs/remotes/tested/sync"
+          tested_commit=$(git rev-parse refs/remotes/tested/sync)
+          git push origin "$tested_commit:refs/heads/$branch"
+          gh pr create \
+            --base xclipsen \
+            --head "$branch" \
+            --title "Sync upstream Quattro" \
+            --body "Merge the latest basecamp/omarchy Quattro changes. Run the complete fork test suite before merging."

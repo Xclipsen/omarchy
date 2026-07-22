@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# omarchy:summary=Configure encrypted Lab Backup
+
+set -euo pipefail
+
+omarchy-cmd-present /usr/bin/lab-backup-setup || { echo "Install Lab Backup first." >&2; exit 1; }
+/usr/bin/lab-backup-setup

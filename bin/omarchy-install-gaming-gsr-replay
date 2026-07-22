@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# omarchy:summary=Install the GPU Screen Recorder instant replay service
+# omarchy:requires-sudo=true
+
+set -euo pipefail
+
+omarchy-pkg-github-release-add \
+  Xclipsen/gsr-replay \
+  v1.1.0 \
+  gsr-replay-1.1.0-1-any.pkg.tar.zst \
+  b4be0d54974571bf1916d6088e6a214e56f440ecfc0d4517b5da556f9571f9eb \
+  gsr-replay
+
+omarchy-setup-gsr-replay
+omarchy-bar-plugin add omarchy.gsr-replay

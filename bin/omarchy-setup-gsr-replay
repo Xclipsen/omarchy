@@ -1,0 +1,78 @@
+#!/bin/bash
+
+# omarchy:summary=Configure GSR Replay with external Toshiba storage
+
+set -euo pipefail
+
+omarchy-cmd-present /usr/bin/gsr-replay || { echo "Install GSR Replay first." >&2; exit 1; }
+
+legacy_paths=(
+  "$HOME/.config/systemd/user/gsr-replay.service"
+  "$HOME/.local/bin/gsr-replay"
+  "$HOME/.local/bin/gsr-replay-callback"
+  "$HOME/.local/bin/gsr-replay-start"
+)
+legacy_found=()
+for path in "${legacy_paths[@]}"; do
+  [[ ! -e $path && ! -L $path ]] || legacy_found+=("$path")
+done
+
+replay_mount="/run/media/$USER/toshiba"
+replay_target="$replay_mount/Replays"
+replay_link="$HOME/Videos/replay"
+replay_uuid="E81E0C941E0C5DC6"
+mounted_at=$(findmnt -n -o TARGET --target "$replay_mount" 2>/dev/null || true)
+[[ $mounted_at == "$replay_mount" ]] || {
+  echo "Mount the Toshiba drive at $replay_mount, then run setup again." >&2
+  exit 1
+}
+mounted_uuid=$(findmnt -n -o UUID --target "$replay_mount" 2>/dev/null || true)
+[[ $mounted_uuid == "$replay_uuid" ]] || {
+  echo "The filesystem at $replay_mount is not the configured Toshiba drive." >&2
+  exit 1
+}
+
+[[ ! -L $replay_target ]] || {
+  echo "$replay_target is a symlink; refusing to use it as replay storage." >&2
+  exit 1
+}
+target_existed="false"
+[[ -e $replay_target ]] && target_existed="true"
+mkdir -p "$replay_target"
+mounted_at=$(findmnt -n -o TARGET --target "$replay_target" 2>/dev/null || true)
+if [[ $mounted_at != "$replay_mount" ]]; then
+  [[ $target_existed == "true" ]] || rmdir "$replay_target" 2>/dev/null || true
+  echo "The Toshiba drive became unavailable while preparing $replay_target." >&2
+  exit 1
+fi
+
+mkdir -p "$(dirname -- "$replay_link")"
+if [[ -L $replay_link ]]; then
+  [[ $(readlink -f "$replay_link") == "$replay_target" ]] || {
+    echo "$replay_link already points somewhere else; refusing to replace it." >&2
+    exit 1
+  }
+elif [[ -e $replay_link ]]; then
+  echo "$replay_link already exists and is not a symlink; refusing to replace it." >&2
+  exit 1
+else
+  ln -s "$replay_target" "$replay_link"
+fi
+
+if ((${#legacy_found[@]} > 0)); then
+  printf 'Legacy GSR Replay files shadow the packaged installation:\n'
+  printf '  %s\n' "${legacy_found[@]}"
+  gum confirm --default=false "Back up and remove these legacy files?" || exit 1
+
+  systemctl --user disable --now gsr-replay.service >/dev/null 2>&1 || true
+  backup_dir="$HOME/.local/state/omarchy/backups/gsr-replay-$(date +%Y%m%d-%H%M%S)"
+  mkdir -p "$backup_dir"
+  for path in "${legacy_found[@]}"; do
+    mv "$path" "$backup_dir/"
+  done
+  echo "Legacy files moved to $backup_dir"
+fi
+systemctl --user daemon-reload
+
+GSR_REPLAY_ENFORCED_DIR="$replay_link" GSR_REPLAY_ENFORCED_FS_UUID="$replay_uuid" /usr/bin/gsr-replay setup
+install -Dm600 /dev/null "$HOME/.local/state/omarchy/gsr-replay-configured"

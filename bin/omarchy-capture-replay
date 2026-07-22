@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# omarchy:summary=Save or toggle the validated Toshiba replay buffer
+# omarchy:args=<save|toggle>
+
+set -euo pipefail
+
+action=${1-}
+[[ $action == save || $action == toggle ]] || { echo "Usage: omarchy-capture-replay <save|toggle>" >&2; exit 2; }
+
+if [[ $action == toggle ]] && systemctl --user is-active --quiet gsr-replay.service; then
+  exec /usr/bin/gsr-replay stop
+fi
+
+omarchy-installed-service-gsr-replay || {
+  omarchy-notification-send -u critical -t 4000 "Replay storage unavailable" "Run GSR Replay setup with the Toshiba drive mounted."
+  exit 1
+}
+
+exec /usr/bin/gsr-replay "$action"

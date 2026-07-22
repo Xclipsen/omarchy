@@ -191,3 +191,24 @@ New migration format:
 Omarchy 4.0 is upgraded through `bin/omarchy-upgrade-to-quattro`, not through the normal migration runner. Do not add compatibility migrations for old installer layouts; put pre-4 package-layout transition work in the upgrade command instead.
 
 Migrations may use raw `pacman`, `command -v`, or direct config edits when needed for one-off repair work.
+
+# Xclipsen Fork
+
+- `quattro` is a clean mirror of `basecamp/omarchy:quattro`; never commit fork
+  changes there. Fork work belongs on `xclipsen` or a topic branch based on it.
+- Keep `lab-backup` and `gsr-replay` in their own repositories. This repository
+  contains only package download adapters, menu entries, and shell integration.
+- GitHub release packages must use immutable version pins and SHA-256 digests.
+  Never install an unverified archive or use a moving `latest` URL.
+- Download private release assets as the desktop user. Never pass `GH_TOKEN`,
+  GitHub credentials, backup credentials, SSH keys, or webhooks through `pkexec`.
+- Lab Backup package changes must preserve `/etc/lab-backup`,
+  `/var/lib/lab-backup`, and recovery files. Normal removal is non-destructive.
+- GSR Replay clips live through `~/Videos/replay`, which points at the mounted
+  Toshiba drive. Do not add that external filesystem to Restic automatically.
+- Normal Omarchy screen recordings must track and stop only their exact PID;
+  broad `pgrep`, `pkill`, or `killall` matches for GPU Screen Recorder are
+  forbidden because the replay buffer runs concurrently.
+- Tests and package builds may run in the workspace. Do not install packages,
+  enable services, link dev mode, or modify the live desktop during CI-style
+  validation unless the user explicitly requests an installation test.

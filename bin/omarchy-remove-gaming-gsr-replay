@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# omarchy:summary=Remove GSR Replay while preserving configuration and clips
+# omarchy:requires-sudo=true
+
+set -euo pipefail
+
+omarchy-bar-plugin remove omarchy.gsr-replay --all 2>/dev/null || true
+if [[ -x /usr/bin/gsr-replay ]]; then
+  /usr/bin/gsr-replay waybar-uninstall || true
+fi
+systemctl --user disable --now gsr-replay.service >/dev/null 2>&1 || true
+omarchy-pkg-drop gsr-replay
+systemctl --user daemon-reload

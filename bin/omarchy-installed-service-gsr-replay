@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# omarchy:summary=Check whether GSR Replay is installed
+# omarchy:hidden=true
+
+omarchy-pkg-present gsr-replay && \
+  [[ -f $HOME/.local/state/omarchy/gsr-replay-configured ]] && \
+  /usr/bin/gsr-replay verify-output "$HOME/Videos/replay" E81E0C941E0C5DC6 >/dev/null 2>&1
