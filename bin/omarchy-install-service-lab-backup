@@ -12,9 +12,9 @@ gh auth status >/dev/null || {
 
 omarchy-pkg-github-release-add \
   Xclipsen/lab-backup \
-  v1.0.0 \
-  lab-backup-1.0.0-1-any.pkg.tar.zst \
-  56f7a88e4ba68a1031dbe50e3a3e37eef3a16efdf2282319e4d235be23c77ac1 \
+  v1.0.1 \
+  lab-backup-1.0.1-4-any.pkg.tar.zst \
+  0aea89bd29b722cc0efd12e5a1703785a7de1a18ce523fd1550e0f92e06b9a1b \
   lab-backup
 
 /usr/bin/lab-backup-setup
