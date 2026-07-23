@@ -11,7 +11,7 @@ if (($# == 0)); then
     read -r editor <"$editor_file"
   fi
 
-  [[ -n $editor ]] && echo "$editor" || echo "nvim"
+  [[ -n $editor ]] && echo "$editor" || echo "helix"
   exit 0
 fi
 

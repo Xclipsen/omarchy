@@ -120,6 +120,18 @@ assert(
   'menu keeps Input as a direct config action'
 )
 assert(
+  defaultById['learn.helix'].action.includes('docs.helix-editor.com/keymap.html') && !defaultById['learn.neovim'],
+  'menu teaches the shipped Helix editor'
+)
+assert(
+  defaultById['install.media.lazycut'].action.includes('omarchy-install-lazycut'),
+  'menu exposes the patched Lazycut installer'
+)
+assert(
+  defaultItems.findIndex(item => item.id === 'setup.default.editor.helix') < defaultItems.findIndex(item => item.id === 'setup.default.editor.neovim'),
+  'menu lists Helix before optional Neovim'
+)
+assert(
   defaultById['setup.direct-boot'].action.includes('omarchy-config-direct-boot'),
   'menu places Direct Boot directly under Setup'
 )

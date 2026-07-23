@@ -1,0 +1,37 @@
+[[mgr.prepend_keymap]]
+on = ["g", "w"]
+run = "cd ~/Documents/workspace"
+desc = "Go to workspace"
+
+[[mgr.prepend_keymap]]
+on = ["g", "o"]
+run = "cd ~/.local/share/Trash/files"
+desc = "Go to trash"
+
+[[mgr.prepend_keymap]]
+on = ["g", "r"]
+run = "cd ~/Videos/replay"
+desc = "Go to replays"
+
+[[mgr.prepend_keymap]]
+on = ["g", "v"]
+run = "cd ~/Videos"
+desc = "Go to videos"
+
+[[mgr.prepend_keymap]]
+on = ["l", "c"]
+run = "shell --block -- lazycut %h"
+desc = "Trim hovered video with Lazycut"
+
+[[mgr.prepend_keymap]]
+on = ["c", "u"]
+run = "shell --block -- cat %s | wl-copy"
+desc = "Copy selected file contents"
+
+[[mgr.prepend_keymap]]
+on = "y"
+run = [
+  "shell -- for path in %s; do printf 'file://%s\\n' \"$path\"; done | wl-copy -t text/uri-list",
+  "yank",
+]
+desc = "Yank and copy files to the Wayland clipboard"

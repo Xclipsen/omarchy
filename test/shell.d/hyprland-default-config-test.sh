@@ -101,6 +101,7 @@ trap 'rm -rf "$tmpdir"' EXIT
 fresh_home="$tmpdir/fresh-home"
 mkdir -p "$fresh_home"
 fresh_output=$(run_application_bindings "$fresh_home")
+grep -Fq $'SUPER + SHIFT + F\tFile manager' <<<"$fresh_output" || fail "default application bindings include Yazi"
 grep -Fq $'SUPER + RETURN	Terminal' <<<"$fresh_output" || fail "default application bindings include essentials"
 grep -Fq $'SUPER + SHIFT + A	ChatGPT' <<<"$fresh_output" || fail "default application bindings include preinstalled web apps"
 pass "default application bindings load from package defaults"

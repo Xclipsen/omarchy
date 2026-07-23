@@ -13,3 +13,6 @@ omarchy-theme-set-pi --activate
 
 mkdir -p ~/.config/btop/themes
 ln -snf "$HOME/.local/state/omarchy/current/theme/btop.theme" ~/.config/btop/themes/current.theme
+
+mkdir -p ~/.config/helix/themes
+ln -snf "$HOME/.local/state/omarchy/current/theme/helix.toml" ~/.config/helix/themes/omarchy.toml

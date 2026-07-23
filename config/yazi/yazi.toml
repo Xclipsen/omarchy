@@ -1,0 +1,9 @@
+[opener]
+edit = [
+  { run = '$EDITOR "$@"', block = true, desc = "Edit" },
+]
+
+[open]
+prepend_rules = [
+  { url = "*.eml", use = "edit" },
+]

@@ -34,7 +34,7 @@ launch_and_verify() {
 # name|command|window class regex
 apps='terminal|foot|^foot$
 browser|chromium --new-window|(?i)chromium
-files|nautilus --new-window|org.gnome.Nautilus
+files|omarchy-launch-yazi|org.omarchy.yazi
 calculator|gnome-calculator|org.gnome.Calculator
 notes|obsidian|(?i)obsidian
 office|libreoffice|(?i)(soffice|libreoffice)

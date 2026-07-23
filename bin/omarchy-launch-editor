@@ -15,10 +15,10 @@ fi
 if [[ -f $default_editor ]]; then
   read -r editor <"$default_editor"
 else
-  editor="nvim"
+  editor="helix"
 fi
 
-omarchy-cmd-present "$editor" || editor="nvim"
+omarchy-cmd-present "$editor" || editor="helix"
 
 case "${editor##*/}" in
 nvim | vim | nano | micro | hx | helix | fresh)

@@ -53,7 +53,18 @@ alias ic='tdl c'
 alias ix='tdl cx'
 alias icx='tdl c cx'
 alias mup='MISE_MINIMUM_RELEASE_AGE=0 mise up'
-n() { if [ "$#" -eq 0 ]; then command nvim . ; else command nvim "$@"; fi; }
+alias lg='lazygit'
+n() { if (( $# == 0 )); then omarchy-launch-editor --inline .; else omarchy-launch-editor --inline "$@"; fi; }
+y() {
+  local tmp cwd
+  tmp=$(mktemp -t "yazi-cwd.XXXXXX") || return
+
+  if yazi "$@" --cwd-file="$tmp"; then
+    cwd=$(cat -- "$tmp")
+    [[ -n $cwd && $cwd != "$PWD" ]] && builtin cd -- "$cwd"
+  fi
+  rm -f -- "$tmp"
+}
 
 # Git
 alias g='git'

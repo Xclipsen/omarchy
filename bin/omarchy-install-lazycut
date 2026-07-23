@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# omarchy:summary=Build and install the Omarchy-patched Lazycut video trimming TUI
+# omarchy:requires-sudo=true
+
+set -euo pipefail
+
+omarchy-pkg-add chafa ffmpeg go
+
+build_parent=${XDG_RUNTIME_DIR:-/tmp}
+[[ -d $build_parent && -O $build_parent ]] || build_parent=/tmp
+build_dir=$(mktemp -d "$build_parent/omarchy-lazycut.XXXXXX")
+trap 'chmod -R u+w "$build_dir" 2>/dev/null || true; rm -rf "$build_dir"' EXIT
+chmod 700 "$build_dir"
+cp -a "$OMARCHY_PATH/install/lazycut/." "$build_dir/"
+
+(
+  cd "$build_dir"
+  makepkg --cleanbuild --noconfirm
+)
+
+mapfile -t packages < <(find "$build_dir" -maxdepth 1 -type f -name 'lazycut-*.pkg.tar.zst' -print)
+(( ${#packages[@]} == 1 )) || { echo "Expected one Lazycut package, found ${#packages[@]}" >&2; exit 1; }
+
+pkexec env OMARCHY_UPDATE_PACMAN=1 pacman -U --noconfirm --needed "${packages[0]}"
+pacman -Q lazycut >/dev/null || { echo "Lazycut did not install" >&2; exit 1; }

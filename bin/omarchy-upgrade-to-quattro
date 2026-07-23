@@ -552,7 +552,6 @@ install_omarchy_quattro_packages() {
   local core_packages=(
     omarchy-keyring
     "$settings_package"
-    omarchy-nvim
     "$omarchy_package"
     fakeroot
     pacman-contrib

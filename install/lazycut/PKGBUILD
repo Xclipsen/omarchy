@@ -1,0 +1,36 @@
+pkgname=lazycut
+pkgver=0.3.9
+pkgrel=1
+pkgdesc="Terminal video trimming TUI with Omarchy rendering fixes"
+arch=('x86_64')
+url="https://github.com/ozemin/lazycut"
+license=('MIT')
+depends=('chafa' 'ffmpeg')
+makedepends=('go')
+options=('!debug')
+source=(
+  "$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz"
+  'omarchy-rendering.patch'
+)
+sha256sums=(
+  '14c18eeef885c90a1660a85d760b0520d1d2256b38e4f5fe5b750f0d34baadd4'
+  '5057e68915f18b5922ca3b3e48a5c786a609b7fbe1af7dcb13e97d17ce2871d7'
+)
+
+prepare() {
+  cd "$pkgname-$pkgver"
+  patch -Np1 <"$srcdir/omarchy-rendering.patch"
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+  export CGO_ENABLED=0
+  export GOPATH="$srcdir/gopath"
+  go build -trimpath -ldflags "-s -w -X main.version=v$pkgver" -o lazycut .
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+  install -Dm755 lazycut "$pkgdir/usr/bin/lazycut"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

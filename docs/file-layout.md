@@ -22,9 +22,9 @@ Two Arch packages are built from this one repo (PKGBUILDs live in
   (`omarchy-debug`, `omarchy-debug-idle`, `omarchy-upload-log`) needed by
   the live ISO env.
 
-Two other packages live in `omarchy-pkgs/` but stand alone:
-`omarchy-keyring` (GPG keys for pacman) and `omarchy-nvim` (the Neovim
-setup; independently seeds `/etc/skel`).
+`omarchy-keyring` lives in `omarchy-pkgs/` as a standalone package. Editor
+and file-manager defaults, including Helix and Yazi, are seeded by
+`omarchy-settings` with the rest of `config/**`.
 
 Three layers populate `$HOME`:
 
@@ -271,9 +271,10 @@ brand-new user, so this one copy resyncs `.bashrc`, `.config/**`,
 `.local/share/applications/`, the nautilus-python extensions, hypr toggles,
 branding files, and the shipped migration markers in a single pass.
 
-Then it runs `omarchy-refresh-limine`, `omarchy-refresh-plymouth`, and the
-nvim refresh. Destructive: existing user files copied from `/etc/skel` are
-clobbered without backup. Fastfetch is package-owned at
+Then it runs `omarchy-refresh-limine`, `omarchy-refresh-plymouth`, and an
+optional Neovim compatibility refresh when the old helper is installed.
+Destructive: existing user files copied from `/etc/skel` are clobbered without
+backup. Fastfetch is package-owned at
 `/etc/fastfetch/config.jsonc`; delete `~/.config/fastfetch/config.jsonc` to
 return to the packaged default.
 

@@ -35,7 +35,7 @@ migration_file="migrations/$(git log -1 --format=%cd --date=unix).sh"
 touch "$migration_file"
 
 if (( ! no_edit )); then
-  nvim "$migration_file"
+  omarchy-launch-editor --inline "$migration_file"
 fi
 
 printf '%s\n' "$PWD/$migration_file"

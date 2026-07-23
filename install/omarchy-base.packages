@@ -1,6 +1,7 @@
 # Omarchy core package list pacstrapped by the ISO.
 # The ISO builder also reads this file when constructing the offline mirror.
 
+7zip
 aether
 alsa-utils
 asdcontrol
@@ -13,6 +14,7 @@ bluez-utils
 bolt
 brightnessctl
 btop
+chafa
 chromium
 clang
 cliamp
@@ -36,6 +38,7 @@ fcitx5
 fcitx5-gtk
 fcitx5-qt
 fd
+ffmpeg
 ffmpegthumbnailer
 fontconfig
 foot
@@ -50,6 +53,7 @@ gum
 gvfs-mtp
 gvfs-nfs
 gvfs-smb
+helix
 hyprland
 hyprland-guiutils
 hyprland-preview-share-picker
@@ -88,12 +92,10 @@ noto-fonts
 noto-fonts-cjk
 noto-fonts-emoji
 nss-mdns
-nvim
 obs-studio
 obsidian
 omacut
 omawrite
-omarchy-nvim
 pacman-contrib
 pamixer
 pinta
@@ -107,6 +109,7 @@ python-terminaltexteffects
 qemu-user-static-binfmt
 qt5-wayland
 quickshell-git
+resvg
 ripgrep
 ruby
 rust
@@ -144,5 +147,6 @@ xdg-terminal-exec
 xournalpp
 yaru-icon-theme
 yay
+yazi
 yt-dlp
 zoxide

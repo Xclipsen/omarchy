@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# omarchy:summary=Launch Yazi in the home directory
+
+exec omarchy-launch-tui yazi "$HOME"

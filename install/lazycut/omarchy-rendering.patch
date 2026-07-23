@@ -1,0 +1,104 @@
+diff --git a/cmd/root.go b/cmd/root.go
+index 47369b3..54e3a15 100644
+--- a/cmd/root.go
++++ b/cmd/root.go
+@@ -79 +79 @@ func init() {
+-	rootCmd.Flags().IntVar(&fps, "fps", 24, "preview frame rate (lower = faster rendering)")
++	rootCmd.Flags().IntVar(&fps, "fps", 10, "preview frame rate (lower = faster rendering)")
+diff --git a/ui/panels/preview.go b/ui/panels/preview.go
+index 9d62311..c612574 100644
+--- a/ui/panels/preview.go
++++ b/ui/panels/preview.go
+@@ -3,0 +4,2 @@ import (
++	"strings"
++
+@@ -34,5 +36,14 @@ func (p *Preview) Render(width, height int) string {
+-	return lipgloss.NewStyle().
+-		Width(width).
+-		Height(height).
+-		Align(lipgloss.Center, lipgloss.Center).
+-		Render(frame)
++	return fitFrame(frame, height)
++}
++
++func fitFrame(frame string, height int) string {
++	lines := strings.Split(frame, "\n")
++
++	if len(lines) > height {
++		lines = lines[:height]
++	}
++	for len(lines) < height {
++		lines = append(lines, "")
++	}
++
++	return strings.Join(lines, "\n")
+diff --git a/video/chafa.go b/video/chafa.go
+index 92223fb..fe1f491 100644
+--- a/video/chafa.go
++++ b/video/chafa.go
+@@ -4 +3,0 @@ import (
+-	"bytes"
+@@ -5,0 +5,2 @@ import (
++	"image"
++	"image/png"
+@@ -7,0 +9 @@ import (
++	"path/filepath"
+@@ -23,7 +25,15 @@ func (c ChafaConfig) Render(pixels []byte, pixW, pixH, termW, termH int) (string
+-	var buf bytes.Buffer
+-	buf.Grow(len("P6\n") + 20 + pixW*pixH*3)
+-	fmt.Fprintf(&buf, "P6\n%d %d\n255\n", pixW, pixH)
+-	for i := 0; i < len(pixels); i += rgbaChannels {
+-		buf.WriteByte(pixels[i])
+-		buf.WriteByte(pixels[i+1])
+-		buf.WriteByte(pixels[i+2])
++	// Chafa's stdin image decoding is unreliable across versions. Write a
++	// temporary PNG and render from the file path instead.
++	tmp, err := os.CreateTemp("", "lazycut-frame-*.png")
++	if err != nil {
++		return "", fmt.Errorf("failed to create temp file: %w", err)
++	}
++	tmpPath := tmp.Name()
++	if err := tmp.Close(); err != nil {
++		_ = os.Remove(tmpPath)
++		return "", fmt.Errorf("failed to close temp file: %w", err)
++	}
++	defer os.Remove(tmpPath)
++
++	if err := rgbaToPNG(tmpPath, pixels, pixW, pixH); err != nil {
++		return "", err
+@@ -44 +54 @@ func (c ChafaConfig) Render(pixels []byte, pixW, pixH, termW, termH int) (string
+-	cmd := exec.Command("chafa",
++	args := []string{
+@@ -46 +56 @@ func (c ChafaConfig) Render(pixels []byte, pixW, pixH, termW, termH int) (string
+-		"--symbols", "block+border+space",
++		"--symbols", "block+border+space+half+quad+sextant+braille",
+@@ -51 +61 @@ func (c ChafaConfig) Render(pixels []byte, pixW, pixH, termW, termH int) (string
+-		"--optimize", "5",
++		"--optimize", "7",
+@@ -53,0 +64 @@ func (c ChafaConfig) Render(pixels []byte, pixW, pixH, termW, termH int) (string
++		"--relative", "off",
+@@ -56,3 +67,4 @@ func (c ChafaConfig) Render(pixels []byte, pixW, pixH, termW, termH int) (string
+-		"-",
+-	)
+-	cmd.Stdin = &buf
++		filepath.Clean(tmpPath),
++	}
++
++	cmd := exec.Command("chafa", args...)
+@@ -65,0 +78,16 @@ func (c ChafaConfig) Render(pixels []byte, pixW, pixH, termW, termH int) (string
++
++func rgbaToPNG(path string, pixels []byte, width, height int) error {
++	img := image.NewRGBA(image.Rect(0, 0, width, height))
++	copy(img.Pix, pixels)
++
++	f, err := os.Create(path)
++	if err != nil {
++		return fmt.Errorf("failed to open temp png: %w", err)
++	}
++	defer f.Close()
++
++	if err := png.Encode(f, img); err != nil {
++		return fmt.Errorf("encode png: %w", err)
++	}
++	return nil
++}
